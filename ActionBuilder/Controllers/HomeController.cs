@@ -11,20 +11,17 @@ using Labiba.Actions.Logger.Core.Filters;
 
 namespace ActionBuilder.Controllers
 {
+    [Route("Home")]    
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
         private readonly Stopwatch _timer;
-        private readonly IActionLogger ActionLogger;
+        private readonly IHttpClientFactory _clientFactory;
 
 
-        public HomeController(ILogger<HomeController> logger, IActionLogger actionLogger)
+        public HomeController(IHttpClientFactory clientFactory)
         {
-            _logger = logger;
             _timer = new Stopwatch();
-            ActionLogger = actionLogger;
-
-
+            _clientFactory = clientFactory;
         }
 
         public IActionResult Index()
@@ -49,7 +46,7 @@ namespace ActionBuilder.Controllers
             var result = new HttpClientBaseResponse<T>();
             try
             {
-                using (var client = new HttpClient())
+                using var client = _clientFactory.CreateClient(); 
                 {
                     HttpRequestMessage apiRequest = new HttpRequestMessage
                     {
@@ -80,9 +77,6 @@ namespace ActionBuilder.Controllers
                                 request.Url += request.Payload.GenerateUrlParameter();
                                 apiRequest.RequestUri = new Uri($"{request.Url}");
                                 break;
-                                //case RequestDataSource.FromForm:
-                                //    apiRequest.Content = request.Payload.GenerateMultipartFormDataContent();
-                                //    break;
                         }
                     #endregion
                     _timer.Restart();
@@ -106,7 +100,6 @@ namespace ActionBuilder.Controllers
                             break;
 
                     }
-                    //  httpResult.EnsureSuccessStatusCode();
                     var callContent = httpResult.Content.ReadAsStringAsync().Result;
                     if (string.IsNullOrEmpty(logDetails.ResponseFromApi))
                     {
@@ -114,7 +107,6 @@ namespace ActionBuilder.Controllers
                     }
                     logDetails.APIExecutionTime = _timer.ElapsedMilliseconds;
 
-                    // var callResult = System.Text.Json.JsonSerializer.Deserialize<T>(callContent);
 
                     result.IsSuccess = true;
                     result.Data = callContent;
@@ -141,18 +133,28 @@ namespace ActionBuilder.Controllers
         {
             LogDetails logDetails = new();
 
-            var response = await CallAsync<Object>(request, logDetails);
-
-            if (response.IsSuccess)
+            if(!ModelState.IsValid)
             {
-                // Pass the status code to the view using ViewBag
-                ViewBag.StatusCode = "200";
+                var response = await CallAsync<Object>(request, logDetails);
+
+                if (response.IsSuccess)
+                {
+                    // Pass the status code to the view using ViewBag
+                    ViewBag.StatusCode = "200";
+                }
+                else
+                {
+                    ViewBag.StatusCode = "Unknown"; // Fallback in case no status code is available
+                }
+                return View("Index");
             }
             else
             {
-                ViewBag.StatusCode = "Unknown"; // Fallback in case no status code is available
+                ViewBag.StatusCode = "Date is wrong"; // Fallback in case no status code is available
+
+                return View("Index");
             }
-            return View("Index");
+           
 
         }
     }
