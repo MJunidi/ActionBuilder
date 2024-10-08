@@ -96,7 +96,7 @@ namespace ActionBuilder.Controllers
             return result;
         }
 
-        private string DetermineResponseFromApi(HttpStatusCode statusCode)
+        private static string DetermineResponseFromApi(HttpStatusCode statusCode)
         {
             switch (statusCode)
             {
