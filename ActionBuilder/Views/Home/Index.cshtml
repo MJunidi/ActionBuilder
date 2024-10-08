@@ -1,0 +1,77 @@
+﻿@model ActionBuilder.Models.HttpClientBaseRequest;
+@{
+    ViewData["Title"] = "Home Page";
+    var statusCode = ViewBag.StatusCode;
+}
+
+<div class="container">
+   
+
+    <h1>Send Request</h1>
+    <row>
+        <div class="col-12">
+            <form class="form-group" asp-action="SendReq" method="Post">
+                <div class="row">
+                    <div class="col-2">
+                        <label asp-for="Method">Method:</label>
+                        <select asp-for="Method" class="form-control" id="exampleFormControlSelect1">
+                            <option>GET</option>
+                            <option>POST</option>
+                            <option>PUT</option>
+                            <option>DELETE</option>
+                        </select>
+                    </div>
+                    <div class="col-8">
+                        <label asp-for="Url">URL address</label>
+                        <input asp-for="Url" type="text" class="form-control" id="exampleFormControlInput1" placeholder="name@example.com">
+                    </div>
+                    <div class="col-2 mt-3 d-flex align-items-end justify-content-center ">
+                        <button type="submit" class="btn btn-primary w-100">Send</button>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <ul class="nav nav-tabs">
+                        <li class="nav-item" id="Params">
+                            <a class="nav-link active" aria-current="page" href="#">Params</a>
+                        </li>
+                        <li class="nav-item" id="Authorization">
+                            <a class="nav-link" href="#">Authorization</a>
+                        </li>
+                        <li class="nav-item" id="Headers">
+                            <a class="nav-link" href="#">Headers</a>
+                        </li>
+                        <li class="nav-item" id="Body">
+                            <a class="nav-link" href="#">Body</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12" id="params-form">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Key</th>
+                                    <th>Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <th>test</th>
+                                    <th>das</th>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </form>
+
+        </div>
+    </row>
+    @if (statusCode != null)
+    {
+        <div class="alert alert-info mt-3">
+            HTTP Status Code: @statusCode
+        </div>
+    }
+</div>
