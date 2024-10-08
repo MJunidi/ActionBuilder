@@ -7,6 +7,7 @@ using Labiba.Actions.Logger.Core.Models;
 using ActionBuilder.Entities.Extentions;
 using Labiba.Actions.Logger.Core.Repositories.Interfaces;
 using Labiba.Actions.Logger.Core.Filters;
+using System.Net;
 
 
 namespace ActionBuilder.Controllers
@@ -55,51 +56,20 @@ namespace ActionBuilder.Controllers
                     };
 
                     #region Headers
-                    foreach (var header in request.Headers)
-                    {
-                        apiRequest.Headers.Add(header.Key, header.Value);
-                    }
+                    FillHeaders(request, apiRequest);
                     #endregion
 
                     #region Payload
                     if (request.Payload != null)
-                        switch (request.Source)
-                        {
-                            case RequestDataSource.FromBody:
-                                apiRequest.Content =
-                                    new StringContent(System.Text.Json.JsonSerializer.Serialize(request.Payload), Encoding.UTF8, "application/json");
-                                break;
-                            case RequestDataSource.FromQueryString:
-                                request.Url += "?" + request.Payload.GenerateQueryString();
-                                apiRequest.RequestUri = new Uri($"{request.Url}");
-                                break;
-                            case RequestDataSource.FromUrl:
-                                request.Url += request.Payload.GenerateUrlParameter();
-                                apiRequest.RequestUri = new Uri($"{request.Url}");
-                                break;
-                        }
+                        DeterminePayload(request, apiRequest);
                     #endregion
                     _timer.Restart();
                     var httpResult = await client.SendAsync(apiRequest);
                     _timer.Stop();
                     logDetails.APIExecutionTime = _timer.ElapsedMilliseconds;
 
-                    switch (httpResult.StatusCode)
-                    {
-                        case System.Net.HttpStatusCode.Unauthorized:
-                            logDetails.ResponseFromApi = JsonConvert.SerializeObject($"{httpResult.StatusCode}API Returned Unauthorized");
-                            break;
-                        case System.Net.HttpStatusCode.BadRequest:
-                            logDetails.ResponseFromApi = JsonConvert.SerializeObject($"{httpResult.StatusCode}API Returned BadRequest");
-                            break;
-                        case System.Net.HttpStatusCode.NotFound:
-                            logDetails.ResponseFromApi = JsonConvert.SerializeObject($"{httpResult.StatusCode}API Returned NotFound");
-                            break;
-                        case System.Net.HttpStatusCode.NoContent:
-                            logDetails.ResponseFromApi = JsonConvert.SerializeObject($"{httpResult.StatusCode}API Returned NoContent");
-                            break;
-
-                    }
+                    logDetails.ResponseFromApi = JsonConvert.SerializeObject(DetermineResponseFromApi(httpResult.StatusCode));
+            
                     var callContent = httpResult.Content.ReadAsStringAsync().Result;
                     if (string.IsNullOrEmpty(logDetails.ResponseFromApi))
                     {
@@ -124,6 +94,53 @@ namespace ActionBuilder.Controllers
 
             }
             return result;
+        }
+
+        private string DetermineResponseFromApi(HttpStatusCode statusCode)
+        {
+            switch (statusCode)
+            {
+                case System.Net.HttpStatusCode.Unauthorized:
+                  return  $"{statusCode}API Returned Unauthorized";
+                case System.Net.HttpStatusCode.BadRequest:
+                   return $"{statusCode}API Returned BadRequest";
+                case System.Net.HttpStatusCode.NotFound:
+                   return $"{statusCode}API Returned NotFound";
+                case System.Net.HttpStatusCode.NoContent:
+                  return  $"{statusCode}API Returned NoContent";
+                default:
+                    return "";
+            }
+        }
+
+        private HttpRequestMessage DeterminePayload( HttpClientBaseRequest request, HttpRequestMessage apiRequest)
+        {
+            switch (request.Source)
+            {
+                case RequestDataSource.FromBody:
+                    apiRequest.Content =
+                        new StringContent(System.Text.Json.JsonSerializer.Serialize(request.Payload), Encoding.UTF8, "application/json");
+                    break;
+                case RequestDataSource.FromQueryString:
+                    request.Url += "?" + request.Payload.GenerateQueryString();
+                    apiRequest.RequestUri = new Uri($"{request.Url}");
+                    break;
+                case RequestDataSource.FromUrl:
+                    request.Url += request.Payload.GenerateUrlParameter();
+                    apiRequest.RequestUri = new Uri($"{request.Url}");
+                    break;
+            }
+            return apiRequest;
+        }
+
+        private HttpRequestMessage FillHeaders(HttpClientBaseRequest request, HttpRequestMessage apiRequest)
+        {
+            foreach (var header in request.Headers)
+            {
+                apiRequest.Headers.Add(header.Key, header.Value);
+            }
+
+            return apiRequest;
         }
 
         [HttpPost]
