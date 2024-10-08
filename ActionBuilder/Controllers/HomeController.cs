@@ -113,7 +113,7 @@ namespace ActionBuilder.Controllers
             }
         }
 
-        private HttpRequestMessage DeterminePayload( HttpClientBaseRequest request, HttpRequestMessage apiRequest)
+        private static void DeterminePayload( HttpClientBaseRequest request, HttpRequestMessage apiRequest)
         {
             switch (request.Source)
             {
@@ -130,18 +130,16 @@ namespace ActionBuilder.Controllers
                     apiRequest.RequestUri = new Uri($"{request.Url}");
                     break;
             }
-            return apiRequest;
         }
 
-        private HttpRequestMessage FillHeaders(HttpClientBaseRequest request, HttpRequestMessage apiRequest)
+        private static void FillHeaders(HttpClientBaseRequest request, HttpRequestMessage apiRequest)
         {
             foreach (var header in request.Headers)
             {
                 apiRequest.Headers.Add(header.Key, header.Value);
             }
-
-            return apiRequest;
         }
+
 
         [HttpPost]
         [Route("SendReq")]
