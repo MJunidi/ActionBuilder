@@ -9,12 +9,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Check out the code
+        uses: actions/checkout@v3
+
       - name: Check if PR has approved reviews
         id: check_reviews
         uses: actions/github-script@v6
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const { data: reviews } = await github.pulls.listReviews({
+            const { data: reviews } = await github.rest.pulls.listReviews({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: context.payload.pull_request.number,
