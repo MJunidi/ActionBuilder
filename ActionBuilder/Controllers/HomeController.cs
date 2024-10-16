@@ -7,24 +7,22 @@ using Labiba.Actions.Logger.Core.Models;
 using ActionBuilder.Entities.Extentions;
 using Labiba.Actions.Logger.Core.Repositories.Interfaces;
 using Labiba.Actions.Logger.Core.Filters;
+using System.Net;
 
 
 namespace ActionBuilder.Controllers
 {
+    [Route("Home")]    
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
         private readonly Stopwatch _timer;
-        private readonly IActionLogger ActionLogger;
+        private readonly IHttpClientFactory _clientFactory;
 
 
-        public HomeController(ILogger<HomeController> logger, IActionLogger actionLogger)
+        public HomeController(IHttpClientFactory clientFactory)
         {
-            _logger = logger;
             _timer = new Stopwatch();
-            ActionLogger = actionLogger;
-
-
+            _clientFactory = clientFactory;
         }
 
         public IActionResult Index()
@@ -49,7 +47,7 @@ namespace ActionBuilder.Controllers
             var result = new HttpClientBaseResponse<T>();
             try
             {
-                using (var client = new HttpClient())
+                using var client = _clientFactory.CreateClient(); 
                 {
                     HttpRequestMessage apiRequest = new HttpRequestMessage
                     {
@@ -58,55 +56,20 @@ namespace ActionBuilder.Controllers
                     };
 
                     #region Headers
-                    foreach (var header in request.Headers)
-                    {
-                        apiRequest.Headers.Add(header.Key, header.Value);
-                    }
+                    FillHeaders(request, apiRequest);
                     #endregion
 
                     #region Payload
                     if (request.Payload != null)
-                        switch (request.Source)
-                        {
-                            case RequestDataSource.FromBody:
-                                apiRequest.Content =
-                                    new StringContent(System.Text.Json.JsonSerializer.Serialize(request.Payload), Encoding.UTF8, "application/json");
-                                break;
-                            case RequestDataSource.FromQueryString:
-                                request.Url += "?" + request.Payload.GenerateQueryString();
-                                apiRequest.RequestUri = new Uri($"{request.Url}");
-                                break;
-                            case RequestDataSource.FromUrl:
-                                request.Url += request.Payload.GenerateUrlParameter();
-                                apiRequest.RequestUri = new Uri($"{request.Url}");
-                                break;
-                                //case RequestDataSource.FromForm:
-                                //    apiRequest.Content = request.Payload.GenerateMultipartFormDataContent();
-                                //    break;
-                        }
+                        DeterminePayload(request, apiRequest);
                     #endregion
                     _timer.Restart();
                     var httpResult = await client.SendAsync(apiRequest);
                     _timer.Stop();
                     logDetails.APIExecutionTime = _timer.ElapsedMilliseconds;
 
-                    switch (httpResult.StatusCode)
-                    {
-                        case System.Net.HttpStatusCode.Unauthorized:
-                            logDetails.ResponseFromApi = JsonConvert.SerializeObject($"{httpResult.StatusCode}API Returned Unauthorized");
-                            break;
-                        case System.Net.HttpStatusCode.BadRequest:
-                            logDetails.ResponseFromApi = JsonConvert.SerializeObject($"{httpResult.StatusCode}API Returned BadRequest");
-                            break;
-                        case System.Net.HttpStatusCode.NotFound:
-                            logDetails.ResponseFromApi = JsonConvert.SerializeObject($"{httpResult.StatusCode}API Returned NotFound");
-                            break;
-                        case System.Net.HttpStatusCode.NoContent:
-                            logDetails.ResponseFromApi = JsonConvert.SerializeObject($"{httpResult.StatusCode}API Returned NoContent");
-                            break;
-
-                    }
-                    //  httpResult.EnsureSuccessStatusCode();
+                    logDetails.ResponseFromApi = JsonConvert.SerializeObject(DetermineResponseFromApi(httpResult.StatusCode));
+            
                     var callContent = httpResult.Content.ReadAsStringAsync().Result;
                     if (string.IsNullOrEmpty(logDetails.ResponseFromApi))
                     {
@@ -114,7 +77,6 @@ namespace ActionBuilder.Controllers
                     }
                     logDetails.APIExecutionTime = _timer.ElapsedMilliseconds;
 
-                    // var callResult = System.Text.Json.JsonSerializer.Deserialize<T>(callContent);
 
                     result.IsSuccess = true;
                     result.Data = callContent;
@@ -134,6 +96,51 @@ namespace ActionBuilder.Controllers
             return result;
         }
 
+        private static string DetermineResponseFromApi(HttpStatusCode statusCode)
+        {
+            switch (statusCode)
+            {
+                case System.Net.HttpStatusCode.Unauthorized:
+                  return  $"{statusCode}API Returned Unauthorized";
+                case System.Net.HttpStatusCode.BadRequest:
+                   return $"{statusCode}API Returned BadRequest";
+                case System.Net.HttpStatusCode.NotFound:
+                   return $"{statusCode}API Returned NotFound";
+                case System.Net.HttpStatusCode.NoContent:
+                  return  $"{statusCode}API Returned NoContent";
+                default:
+                    return "";
+            }
+        }
+
+        private static void DeterminePayload( HttpClientBaseRequest request, HttpRequestMessage apiRequest)
+        {
+            switch (request.Source)
+            {
+                case RequestDataSource.FromBody:
+                    apiRequest.Content =
+                        new StringContent(System.Text.Json.JsonSerializer.Serialize(request.Payload), Encoding.UTF8, "application/json");
+                    break;
+                case RequestDataSource.FromQueryString:
+                    request.Url += "?" + request.Payload.GenerateQueryString();
+                    apiRequest.RequestUri = new Uri($"{request.Url}");
+                    break;
+                case RequestDataSource.FromUrl:
+                    request.Url += request.Payload.GenerateUrlParameter();
+                    apiRequest.RequestUri = new Uri($"{request.Url}");
+                    break;
+            }
+        }
+
+        private static void FillHeaders(HttpClientBaseRequest request, HttpRequestMessage apiRequest)
+        {
+            foreach (var header in request.Headers)
+            {
+                apiRequest.Headers.Add(header.Key, header.Value);
+            }
+        }
+
+
         [HttpPost]
         [Route("SendReq")]
         [LogAction(ActionId = 10625093, ClientId = 6667429)]
@@ -141,18 +148,27 @@ namespace ActionBuilder.Controllers
         {
             LogDetails logDetails = new();
 
-            var response = await CallAsync<Object>(request, logDetails);
-
-            if (response.IsSuccess)
+            if(!ModelState.IsValid)
             {
-                // Pass the status code to the view using ViewBag
-                ViewBag.StatusCode = "200";
+                var response = await CallAsync<Object>(request, logDetails);
+
+                if (response.IsSuccess)
+                {
+                    ViewBag.StatusCode = "200";
+                }
+                else
+                {
+                    ViewBag.StatusCode = "Unknown"; 
+                }
+                return View("Index");
             }
             else
             {
-                ViewBag.StatusCode = "Unknown"; // Fallback in case no status code is available
+                ViewBag.StatusCode = "Date is wrong"; 
+
+                return View("Index");
             }
-            return View("Index");
+           
 
         }
     }

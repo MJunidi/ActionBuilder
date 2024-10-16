@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.9.34622.214
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ActionBuilder", "ActionBuilder\ActionBuilder.csproj", "{01303784-3AFE-4AD3-948D-3EC1BBF6A81D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ActionBuilder", "ActionBuilder\ActionBuilder.csproj", "{01303784-3AFE-4AD3-948D-3EC1BBF6A81D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ActionBuilder.Tests", "ActionBuilder.Tests\ActionBuilder.Tests.csproj", "{ACD42C64-AF7E-45EC-9823-814C88173300}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{01303784-3AFE-4AD3-948D-3EC1BBF6A81D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{01303784-3AFE-4AD3-948D-3EC1BBF6A81D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{01303784-3AFE-4AD3-948D-3EC1BBF6A81D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ACD42C64-AF7E-45EC-9823-814C88173300}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ACD42C64-AF7E-45EC-9823-814C88173300}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ACD42C64-AF7E-45EC-9823-814C88173300}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ACD42C64-AF7E-45EC-9823-814C88173300}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
