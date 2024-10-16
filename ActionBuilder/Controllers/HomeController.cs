@@ -154,18 +154,17 @@ namespace ActionBuilder.Controllers
 
                 if (response.IsSuccess)
                 {
-                    // Pass the status code to the view using ViewBag
                     ViewBag.StatusCode = "200";
                 }
                 else
                 {
-                    ViewBag.StatusCode = "Unknown"; // Fallback in case no status code is available
+                    ViewBag.StatusCode = "Unknown"; 
                 }
                 return View("Index");
             }
             else
             {
-                ViewBag.StatusCode = "Date is wrong"; // Fallback in case no status code is available
+                ViewBag.StatusCode = "Date is wrong"; 
 
                 return View("Index");
             }
