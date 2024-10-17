@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TestGIt")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+976759f76d3d7675becc2fbdcbd41d8bfa4a7718")]
 [assembly: System.Reflection.AssemblyProductAttribute("TestGIt")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TestGIt")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
